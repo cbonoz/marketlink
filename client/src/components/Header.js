@@ -4,6 +4,7 @@ import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 import { Grid } from "@material-ui/core";
+import logo from './../assets/logo.png'
 
 const useStyles = makeStyles({
   root: {
@@ -19,13 +20,9 @@ export default function Header() {
       <AppBar position="static" color="primary">
         <Toolbar>
           <Grid item xs>
-            <Typography variant="h6" color="inherit">
-              Honeycomb Workshop
-            </Typography>
-          </Grid>
-          <Grid item xs>
-            <Typography variant="h6" color="inherit">
-              Adding a React Front-end to your Dapp
+            <Typography variant="h6">
+              {/* Honeycomb Workshop */}
+              <img src={logo} className='header-logo'/>
             </Typography>
           </Grid>
         </Toolbar>

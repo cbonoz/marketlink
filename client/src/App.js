@@ -1,9 +1,10 @@
 import React, { Component } from "react";
 import { Button, Typography, Grid, TextField } from "@material-ui/core";
 import { ThemeProvider } from "@material-ui/styles";
+import ReactRotatingText from 'react-rotating-text'
 
 import MyContract from "./contracts/MyContract.json";
-import ReactTooltip from 'react-tooltip'
+// import ReactTooltip from 'react-tooltip'
 
 import getWeb3 from "./utils/getWeb3";
 
@@ -15,22 +16,36 @@ import "./App.css";
 
 const GAS = 500000;
 const GAS_PRICE = "20000000000";
-const REQUEST_INFO_TEXT = `This will tie 4 location transactions for today's forecast to the Contract Surfer blockchain`
+const ROTATE_ITEMS = ['Blockchain', 'Ethereum', 'Chainlink']
 
-const getFeetFromResult = (result) => Number(result.slice(6, 8)) / 10
+const FIELDS = [
+  'street',
+  'approxemployees',
+  'city',
+  'code',
+  'country',
+  'domain',
+  'email',
+  'founded',
+  'message',
+  'name',
+  'postalcode',
+  'state',
+  'website',
+]
 
-const INITIAL_LOCATION_STATE = {
-  location1: "33.878727, -118.427179",
-  location2: "33.148605, -117.353412",
-  location3: "33.878727, -118.427179",
-  location4: "33.148605, -117.353412"
+const capitalize = (s) => {
+  if (typeof s !== 'string') return ''
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
 class App extends Component {
   state = {
     web3: null,
     accounts: null,
-    ...INITIAL_LOCATION_STATE,
+    email: '',
+    requestId: '',
+    field: FIELDS[0],
     contract: null,
     resultReceived: false,
     result: "0"
@@ -74,23 +89,10 @@ class App extends Component {
     }
   };
 
-  getLocations = () => {
-    const {location1, location2, location3, location4} = this.state
-    return [location1, location2, location3, location4]
-  }
-
   refreshState = async () => {
-    const resultReceived = {}
-    const result = {}
-    const locations = this.getLocations()
-    for (var i = 0; i < locations.length; i ++) {
-      const received_i = await this.state.contract.methods.getResultReceived(i).call();
-      const result_i = (await this.state.contract.methods.getResult(i).call()).toString();
-      resultReceived[i] = received_i
-      result[i] = result_i
-    }
+    const resultReceived = await this.state.contract.methods.resultReceived().call();
+    const result = (await this.state.contract.methods.result().call()).toString();
     this.setState({ resultReceived, result });
-    // console.group('refresh', resultReceived, result)
   };
 
   handleUpdateForm = (name, value) => {
@@ -98,17 +100,15 @@ class App extends Component {
   };
 
   handleRequestResult = async () => {
-    const locations = this.getLocations()
-    // TODO: group into one transaction or make parallel.
-    for (var i = 0; i < locations.length; i ++) { 
-      console.log('requesting', locations[i], i)
-      const requestId = await this.state.contract.methods.makeRequest(locations[i].toString(), i).send({ from: this.state.accounts[0], gas: GAS, gasPrice: GAS_PRICE });
-      console.log('requested', requestId)
-    }
+    const { email, field } = this.state
+    console.log('requesting', email, field)
+    const requestId = await this.state.contract.methods.makeRequest(email, field).send({ from: this.state.accounts[0], gas: GAS, gasPrice: GAS_PRICE });
+    console.log('requested', requestId)
+    this.setState({ requestId })
   };
 
   handleResetResult = async () => {
-    this.setState({...INITIAL_LOCATION_STATE})
+    this.setState({ email: '', field: FIELDS[0] })
     // await this.state.contract.methods
     //   .resetResult()
     //   .send({ from: this.state.accounts[0], gas: GAS, gasPrice: GAS_PRICE });
@@ -121,37 +121,63 @@ class App extends Component {
         <ThemeProvider theme={theme}>
           <div className="App">
             <Header />
-
             <Typography>Loading Web3, accounts, and contract...</Typography>
           </div>
         </ThemeProvider>
       );
     }
 
-    const {result, resultReceived} = this.state
-    const locations = this.getLocations()
-    const parsedResults = []
-    locations.map((loc, i) => {
-      if (result[i]) {
-        parsedResults.push(parseFloat(getFeetFromResult(result[i])))
-      }
-    })
-    const hasAllResults = Object.values(resultReceived || {}).every(x => x)
-    console.log('parsed', parsedResults)
-    const bestResult = Math.max(...parsedResults)
+    const { result, resultReceived, requestId, email, field, web3 } = this.state
+
     return (
       <ThemeProvider theme={theme}>
-        <ReactTooltip />
         <div className="App">
           <Header />
+          <div className='content'>
 
-          <img src={logo} className='header-logo'/>
           <Typography variant="h5" style={{ marginTop: 32 }}>
-            Market research powered on Blockchain.<br/>
-            With just the cost of gas, use ChainLink to do a query against an email address for market research data.
+            Market research powered by <ReactRotatingText items={ROTATE_ITEMS} />
+.<br />
+            <br/>
+            <hr/>
+            <br/>
           </Typography>
+          <p>With just the cost of gas, use ChainLink to do a query against an email address for market research data.</p>
           <Grid>
+            <TextField
+              id="email"
+              className="input"
+              value={email}
+              onChange={e =>
+                this.setState({ email: e.target.value })
+              }
+            />&nbsp;
+            <select onChange={e => {
+              console.log('field', e.target.value)
+              this.setState({field: e.target.value, result: ''})
+            }} value={field} required>
+              {
+                FIELDS.map(function (field) {
+                  return <option key={field} value={field}>{capitalize(field)}</option>;
+                })
+              }
+            </select>&nbsp;
+            <Button variant="contained" color="primary" onClick={() => this.handleRequestResult()}>Search</Button>
           </Grid>
+
+          <Grid container style={{ marginTop: 32 }}>
+            <Grid item xs>
+              {requestId && <p>{`Last RequestId: ${requestId}`}</p>}
+              <Typography variant="h5" style={{ marginTop: 32 }}>
+                {`Result ready: ${resultReceived}`}
+              </Typography>
+            </Grid><Grid item xs>
+              {(web3 && result.length > 0) && <Typography variant="h5" style={{ marginTop: 32 }}>
+                {`Found ${capitalize(field)}: ${result} ${web3.utils.hexToAscii('0x49206861766520313030e282ac')}`}
+              </Typography>}
+            </Grid>
+          </Grid>
+      </div>
         </div>
       </ThemeProvider>
     );

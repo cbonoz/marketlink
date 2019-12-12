@@ -1,4 +1,10 @@
-### MarketLink
+<p align='center'>
+    <img src='./img/logo.png'>
+</p>
+
+MarketLink
+---
+Blockchain powered market research
 
 For just the cost of gas, do queries against corporate email addresses for company data.
 
