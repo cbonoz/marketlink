@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { Button, Typography, Grid, TextField } from "@material-ui/core";
 import { ThemeProvider } from "@material-ui/styles";
 import ReactRotatingText from 'react-rotating-text'
+import Select from 'react-select'
 
 import MyContract from "./contracts/MyContract.json";
 // import ReactTooltip from 'react-tooltip'
@@ -18,6 +19,12 @@ const GAS = 500000;
 const GAS_PRICE = "20000000000";
 const ROTATE_ITEMS = ['Blockchain', 'Ethereum', 'Chainlink']
 
+const capitalize = (s) => {
+  if (typeof s !== 'string') return ''
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+// example address: 222 Berkeley Street Suite 600
 const FIELDS = [
   'street',
   'approxemployees',
@@ -32,12 +39,12 @@ const FIELDS = [
   'postalcode',
   'state',
   'website',
-]
-
-const capitalize = (s) => {
-  if (typeof s !== 'string') return ''
-  return s.charAt(0).toUpperCase() + s.slice(1)
-}
+].map(x => {
+  return {
+    value: x,
+    label: capitalize(x)
+  }
+})
 
 class App extends Component {
   state = {
@@ -92,6 +99,7 @@ class App extends Component {
   refreshState = async () => {
     const resultReceived = await this.state.contract.methods.resultReceived().call();
     const result = (await this.state.contract.methods.result().call()).toString();
+    console.log('refresh', resultReceived, result)
     this.setState({ resultReceived, result });
   };
 
@@ -102,7 +110,7 @@ class App extends Component {
   handleRequestResult = async () => {
     const { email, field } = this.state
     console.log('requesting', email, field)
-    const requestId = await this.state.contract.methods.makeRequest(email, field).send({ from: this.state.accounts[0], gas: GAS, gasPrice: GAS_PRICE });
+    const requestId = await this.state.contract.methods.makeRequest(email, field.value).send({ from: this.state.accounts[0], gas: GAS, gasPrice: GAS_PRICE });
     console.log('requested', requestId)
     this.setState({ requestId })
   };
@@ -114,6 +122,12 @@ class App extends Component {
     //   .send({ from: this.state.accounts[0], gas: GAS, gasPrice: GAS_PRICE });
   };
 
+  handleChange = field => {
+    this.setState(
+      { field },
+      () => console.log(`Option selected:`, this.state.field)
+    );
+  };
 
   render() {
     if (!this.state.web3) {
@@ -128,6 +142,14 @@ class App extends Component {
     }
 
     const { result, resultReceived, requestId, email, field, web3 } = this.state
+    let resultString = result.toString()
+    try {
+      resultString = web3.utils.toUtf8(resultString)
+    } catch (e) {
+      //
+    }
+
+    console.log('result', resultString)
 
     return (
       <ThemeProvider theme={theme}>
@@ -142,8 +164,9 @@ class App extends Component {
             <hr/>
             <br/>
           </Typography>
-          <p>With just the cost of gas, use ChainLink to do a query against an email address for market research data.</p>
+          <p>With just the cost of gas, use ChainLink to do a query against an email address for market research data:</p><br/>
           <Grid>
+            <p className='label-text'>Enter Email:</p>
             <TextField
               id="email"
               className="input"
@@ -152,16 +175,15 @@ class App extends Component {
                 this.setState({ email: e.target.value })
               }
             />&nbsp;
-            <select onChange={e => {
-              console.log('field', e.target.value)
-              this.setState({field: e.target.value, result: ''})
-            }} value={field} required>
-              {
-                FIELDS.map(function (field) {
-                  return <option key={field} value={field}>{capitalize(field)}</option>;
-                })
-              }
-            </select>&nbsp;
+            <div className='select-section'>
+              <p className='label-text'>Select Data to mine:</p>
+               <Select
+                value={field}
+                onChange={this.handleChange}
+                options={FIELDS}
+              />
+            </div>&nbsp;
+            <br/>
             <Button variant="contained" color="primary" onClick={() => this.handleRequestResult()}>Search</Button>
           </Grid>
 
@@ -169,11 +191,11 @@ class App extends Component {
             <Grid item xs>
               {requestId && <p>{`Last RequestId: ${requestId}`}</p>}
               <Typography variant="h5" style={{ marginTop: 32 }}>
-                {`Result ready: ${resultReceived}`}
+                {`Status: ${resultReceived ? 'Done' : 'Searching...' }`}
               </Typography>
             </Grid><Grid item xs>
               {(web3 && result.length > 0) && <Typography variant="h5" style={{ marginTop: 32 }}>
-                {`Found ${capitalize(field)}: ${result} ${web3.utils.hexToAscii('0x49206861766520313030e282ac')}`}
+                {`Found ${capitalize(field)}: ${resultString}`}
               </Typography>}
             </Grid>
           </Grid>

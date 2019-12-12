@@ -7,10 +7,19 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.label-text {
+  font-size: 18px;
+}
+
 .MuiAppBar-colorPrimary  {
   background: white !important;
 }
-
+.select-section {
+  max-width: 200px;
+  margin: 0 auto;
+  padding: 15px;
+  text-align: center;
+}
 .content {
   max-width: 1200px;
   margin: 0 auto;
