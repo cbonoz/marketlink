@@ -109,8 +109,9 @@ class App extends Component {
 
   handleRequestResult = async () => {
     const { email, field } = this.state
-    console.log('requesting', email, field)
-    const requestId = await this.state.contract.methods.makeRequest(email, field.value).send({ from: this.state.accounts[0], gas: GAS, gasPrice: GAS_PRICE });
+    const value = field.value
+    console.log('requesting', email, value)
+    const requestId = await this.state.contract.methods.makeRequest(email, value).send({ from: this.state.accounts[0], gas: GAS, gasPrice: GAS_PRICE });
     console.log('requested', requestId)
     this.setState({ requestId })
   };
