@@ -1,0 +1,16 @@
+{
+  "name": "workshop-honeycomb-react",
+  "version": "1.0.0",
+  "description": "An example project used in the workshop, Adding a React Front-end to your Dapp",
+  "main": "test.js",
+  "scripts": {
+    "deploy-ropsten": "truffle migrate --network ropsten --reset",
+    "test-ropsten": "truffle exec test.js --network ropsten"
+  },
+  "author": "CLCG",
+  "license": "ISC",
+  "dependencies": {
+    "chainlink": "^0.7.5",
+    "truffle-hdwallet-provider": "^1.0.17"
+  }
+}
