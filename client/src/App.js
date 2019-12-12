@@ -108,6 +108,7 @@ class App extends Component {
   };
 
   handleRequestResult = async () => {
+    this.handleResetResult()
     const { email, field } = this.state
     const value = field.value
     console.log('requesting', email, value)
@@ -117,10 +118,10 @@ class App extends Component {
   };
 
   handleResetResult = async () => {
-    this.setState({ email: '', field: FIELDS[0] })
-    // await this.state.contract.methods
-    //   .resetResult()
-    //   .send({ from: this.state.accounts[0], gas: GAS, gasPrice: GAS_PRICE });
+    this.setState({ resultReceived: false, result: '' });
+    await this.state.contract.methods
+      .resetResult()
+      .send({ from: this.state.accounts[0], gas: GAS, gasPrice: GAS_PRICE });
   };
 
   handleChange = field => {
@@ -165,7 +166,7 @@ class App extends Component {
             <hr/>
             <br/>
           </Typography>
-          <p>With just the cost of gas, use ChainLink to do a query against an email address for market research data:</p><br/>
+          <p>With just the cost of gas, use ChainLink to do a query against a corporate email address for market research data:</p><br/>
           <Grid>
             <p className='label-text'>Enter Email:</p>
             <TextField
@@ -185,7 +186,8 @@ class App extends Component {
               />
             </div>&nbsp;
             <br/>
-            <Button variant="contained" color="primary" onClick={() => this.handleRequestResult()}>Search</Button>
+            <Button variant="contained" color="primary" onClick={() => this.handleResetResult()}>Reset</Button>&nbsp;
+            <Button variant="contained" color="primary" onClick={() => this.handleRequestResult()}>Search</Button>&nbsp;
           </Grid>
 
           <Grid container style={{ marginTop: 32 }}>
