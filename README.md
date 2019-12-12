@@ -1,5 +1,5 @@
 <p align='center'>
-    <img src='./img/logo.png'>
+    <img src='./img/logo_3_2.png'>
 </p>
 
 MarketLink
